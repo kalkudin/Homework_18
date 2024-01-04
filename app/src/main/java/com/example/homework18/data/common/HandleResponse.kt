@@ -32,7 +32,7 @@ class HandleResponse {
                 response.body()?.let { emit(Resource.Success(it)) }
                     ?: emit(Resource.Error("Empty response body"))
             } else {
-                emit(Resource.Error("Error Code: ${response.code()}"))
+                emit(Resource.Error("Error Code: ${response.code()}") )
             }
         } catch (e: IOException) {
             emit(Resource.Error("Network error: ${e.localizedMessage}"))
