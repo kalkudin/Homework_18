@@ -1,16 +1,14 @@
 package com.example.homework18.presentation.users
 
-import android.util.Log.d
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.homework18.data.common.Resource
 import com.example.homework18.databinding.FragmentUsersListBinding
-import com.example.homework18.domain.users.model.UsersList
+import com.example.homework18.domain.model.User
 import com.example.homework18.presentation.common.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -64,13 +62,16 @@ class UsersListFragment : BaseFragment<FragmentUsersListBinding>(FragmentUsersLi
         }
     }
 
-    private fun handleItemClick(user : UsersList){
+    private fun handleItemClick(user : User){
         usersListViewModel.onClick(user)
     }
 
     private fun handleNavigationEvent(navigationEvent: NavigationEvent) {
         when (navigationEvent) {
             is NavigationEvent.NavigateToDetailsPage -> navigateToUserDetailsWithAction(navigationEvent.userId)
+            else -> {
+                doNothing()
+            }
         }
     }
 
