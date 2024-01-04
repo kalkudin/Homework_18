@@ -1,24 +1,24 @@
 package com.example.homework18.presentation.users
 
-import android.util.Log.d
+import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.homework18.data.common.Resource
 import com.example.homework18.databinding.FragmentUsersListBinding
-import com.example.homework18.domain.users.model.UsersList
+import com.example.homework18.domain.model.User
 import com.example.homework18.presentation.common.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class UsersListFragment : BaseFragment<FragmentUsersListBinding>(FragmentUsersListBinding::inflate){
+class UsersListFragment :
+    BaseFragment<FragmentUsersListBinding>(FragmentUsersListBinding::inflate) {
 
-    private val usersListViewModel : UsersListViewModel by viewModels()
+    private val usersListViewModel: UsersListViewModel by viewModels()
 
     private val usersListRecyclerAdapter = UsersListRecyclerAdapter { user ->
         handleItemClick(user)
@@ -33,28 +33,38 @@ class UsersListFragment : BaseFragment<FragmentUsersListBinding>(FragmentUsersLi
         bindNavigationEvents()
     }
 
-    private fun bindRecyclerView(){
+    private fun bindRecyclerView() {
         binding.usersListRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = usersListRecyclerAdapter
         }
     }
 
-    private fun bindUsers(){
+    private fun bindUsers() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 usersListViewModel.usersFlow.collect {
                     when(it){
-                        is Resource.Success -> usersListRecyclerAdapter.submitList(it.data)
-                        is Resource.Error -> showErrorScreen()
-                        else -> doNothing()
+                        is Resource.Success -> {
+                            hideProgressBar()
+                            usersListRecyclerAdapter.submitList(it.data)
+                        }
+                        is Resource.Error -> {
+                            hideProgressBar()
+                            showErrorScreen()
+                        }
+                        is Resource.Loading -> showProgressBar()
+
+                        else -> {
+                            doNothing()
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun bindNavigationEvents(){
+    private fun bindNavigationEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 usersListViewModel.navigationFlow.collect { navigationEvent ->
@@ -64,13 +74,15 @@ class UsersListFragment : BaseFragment<FragmentUsersListBinding>(FragmentUsersLi
         }
     }
 
-    private fun handleItemClick(user : UsersList){
+    private fun handleItemClick(user: User) {
         usersListViewModel.onClick(user)
     }
 
     private fun handleNavigationEvent(navigationEvent: NavigationEvent) {
         when (navigationEvent) {
-            is NavigationEvent.NavigateToDetailsPage -> navigateToUserDetailsWithAction(navigationEvent.userId)
+            is NavigationEvent.NavigateToDetailsPage -> navigateToUserDetailsWithAction(
+                navigationEvent.userId
+            )
         }
     }
 
@@ -80,11 +92,19 @@ class UsersListFragment : BaseFragment<FragmentUsersListBinding>(FragmentUsersLi
         findNavController().navigate(action)
     }
 
-    private fun showErrorScreen(){
+    private fun showProgressBar() {
+        binding.progressBar.visibility = View.VISIBLE
+    }
+
+    private fun hideProgressBar() {
+        binding.progressBar.visibility = View.GONE
+    }
+
+    private fun showErrorScreen() {
 
     }
 
-    private fun doNothing(){
+    private fun doNothing() {
 
     }
 }

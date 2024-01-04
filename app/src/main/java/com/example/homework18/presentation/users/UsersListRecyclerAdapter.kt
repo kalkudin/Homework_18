@@ -7,15 +7,15 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.homework18.databinding.UsersListItemLayoutBinding
-import com.example.homework18.domain.users.model.UsersList
+import com.example.homework18.domain.model.User
 
-class UsersListRecyclerAdapter(private val itemClickListener: (UsersList) -> Unit) :
-    ListAdapter<UsersList, UsersListRecyclerAdapter.UserViewHolder>(UserDiffCallback()) {
+class UsersListRecyclerAdapter(private val itemClickListener: (User) -> Unit) :
+    ListAdapter<User, UsersListRecyclerAdapter.UserViewHolder>(UserDiffCallback()) {
 
     inner class UserViewHolder(private val binding: UsersListItemLayoutBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(user: UsersList) {
+        fun bind(user: User) {
             binding.id.text = user.id.toString()
             binding.email.text = user.email
             binding.firstName.text = user.firstName
@@ -32,7 +32,8 @@ class UsersListRecyclerAdapter(private val itemClickListener: (UsersList) -> Uni
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
-        val binding = UsersListItemLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            UsersListItemLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return UserViewHolder(binding)
     }
 
@@ -40,12 +41,12 @@ class UsersListRecyclerAdapter(private val itemClickListener: (UsersList) -> Uni
         holder.bind(getItem(position))
     }
 
-    private class UserDiffCallback : DiffUtil.ItemCallback<UsersList>() {
-        override fun areItemsTheSame(oldItem: UsersList, newItem: UsersList): Boolean {
+    private class UserDiffCallback : DiffUtil.ItemCallback<User>() {
+        override fun areItemsTheSame(oldItem: User, newItem: User): Boolean {
             return oldItem.id == newItem.id
         }
 
-        override fun areContentsTheSame(oldItem: UsersList, newItem: UsersList): Boolean {
+        override fun areContentsTheSame(oldItem: User, newItem: User): Boolean {
             return oldItem == newItem
         }
     }

@@ -1,6 +1,6 @@
-package com.example.homework18.domain.users.model
+package com.example.homework18.domain.model
 
-data class UsersList(
+data class User(
     val id : Int,
     val email : String,
     val firstName : String,
