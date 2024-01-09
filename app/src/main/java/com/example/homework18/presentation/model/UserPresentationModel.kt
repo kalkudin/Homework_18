@@ -7,9 +7,14 @@ data class UserPresentationModel(
     val lastName: String,
     val avatar: String,
     var isSelected: IsItemSelected,
-){
+    var status: Status = Status.Success
+) {
     enum class IsItemSelected{
         SELECTED,
         NOT_SELECTED
+    }
+
+    enum class Status {
+        Loading, Success, Error
     }
 }

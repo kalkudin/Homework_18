@@ -10,6 +10,7 @@ fun User.toPresentationModel() : UserPresentationModel{
         firstName = this.firstName,
         lastName = this.lastName,
         avatar = this.avatar,
-        isSelected = UserPresentationModel.IsItemSelected.NOT_SELECTED
+        isSelected = UserPresentationModel.IsItemSelected.NOT_SELECTED,
+        status = UserPresentationModel.Status.Success
     )
 }

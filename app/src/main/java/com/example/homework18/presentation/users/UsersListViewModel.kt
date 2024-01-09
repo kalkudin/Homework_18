@@ -1,5 +1,6 @@
 package com.example.homework18.presentation.users
 
+import android.util.Log.d
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.homework18.data.common.Resource
@@ -20,52 +21,27 @@ import javax.inject.Inject
 
 class UsersListViewModel @Inject constructor(private val userListUseCase: UserListUseCase) :
     ViewModel() {
-    private val _usersFlow = MutableStateFlow<Resource<List<UserPresentationModel>>?>(null)
-    val usersFlow: StateFlow<Resource<List<UserPresentationModel>>?> = _usersFlow.asStateFlow()
+
+    private val _usersFlow = MutableStateFlow<List<UserPresentationModel>>(emptyList())
+    val usersFlow: StateFlow<List<UserPresentationModel>> = _usersFlow.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _navigationFlow = MutableSharedFlow<NavigationEvent>()
     val navigationFlow: SharedFlow<NavigationEvent> = _navigationFlow.asSharedFlow()
-
-    private val _selectedUsers = MutableStateFlow<List<UserPresentationModel>>(emptyList())
 
     init {
         getUsers()
     }
 
     fun onEvent(event : UsersListEvent){
-
-    }
-
-    fun onClick(user: UserPresentationModel) {
-        viewModelScope.launch {
-            _navigationFlow.emit(NavigationEvent.NavigateToDetailsPage(user.id))
-        }
-    }
-
-    fun deleteSelectedUsers() {
-        viewModelScope.launch {
-            val selectedUserIds = _selectedUsers.value.map { it.id }
-            val currentUsersResource = _usersFlow.value
-
-            if (currentUsersResource is Resource.Success) {
-                val remainingUsers =
-                    currentUsersResource.data.filterNot { it.id in selectedUserIds }
-                _usersFlow.value = Resource.Success(remainingUsers)
-
-                _selectedUsers.value = emptyList()
-            }
-        }
-    }
-
-    fun handleSelectionEvent(event: UserSelectionEvent) {
-        when (event) {
-            is UserSelectionEvent.ItemSelected -> {
-                _selectedUsers.value = _selectedUsers.value + event.userPresentationModel
-            }
-
-            is UserSelectionEvent.ItemUnselected -> {
-                _selectedUsers.value = _selectedUsers.value - event.userPresentationModel
-            }
+        when(event){
+            is UsersListEvent.ItemClicked -> handleUserClicked(user = event.userPresentationModel)
+            is UsersListEvent.ItemSelected -> handleUserSelected(user = event.userPresentationModel)
+            is UsersListEvent.ItemUnselected -> handleUserUnselected(user = event.userPresentationModel)
+            is UsersListEvent.DeleteSelectedUsers -> deleteSelectedUsers()
+            is UsersListEvent.RefreshPage -> getUsers()
         }
     }
 
@@ -75,13 +51,44 @@ class UsersListViewModel @Inject constructor(private val userListUseCase: UserLi
                 when (resource) {
                     is Resource.Success -> {
                         val userPresentationModels = resource.data.map { it.toPresentationModel() }
-                        _usersFlow.value = Resource.Success(userPresentationModels)
+                        _usersFlow.value = userPresentationModels.map { it.copy(status = UserPresentationModel.Status.Success) }
+                        _isLoading.value = false
                     }
-
-                    is Resource.Loading -> _usersFlow.value = Resource.Loading()
-                    is Resource.Error -> _usersFlow.value = Resource.Error(resource.errorMessage)
+                    is Resource.Loading -> {
+                        _isLoading.value = true
+                    }
+                    is Resource.Error -> {
+                        _usersFlow.value = _usersFlow.value.map { it.copy(status = UserPresentationModel.Status.Error) }
+                        _isLoading.value = false
+                    }
                 }
             }
+        }
+    }
+
+    private fun handleUserClicked(user: UserPresentationModel) {
+        viewModelScope.launch {
+            _navigationFlow.emit(NavigationEvent.NavigateToDetailsPage(user.id))
+        }
+    }
+
+    private fun handleUserSelected(user: UserPresentationModel) {
+        _usersFlow.value = _usersFlow.value.map {
+            if (it.id == user.id) it.copy(isSelected = UserPresentationModel.IsItemSelected.SELECTED)
+            else it
+        }
+    }
+
+    private fun handleUserUnselected(user: UserPresentationModel) {
+        _usersFlow.value = _usersFlow.value.map {
+            if (it.id == user.id) it.copy(isSelected = UserPresentationModel.IsItemSelected.NOT_SELECTED)
+            else it
+        }
+    }
+
+    private fun deleteSelectedUsers() {
+        _usersFlow.value = _usersFlow.value.filter {
+            it.isSelected != UserPresentationModel.IsItemSelected.SELECTED
         }
     }
 }

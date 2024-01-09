@@ -7,7 +7,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.homework18.data.common.Resource
 import com.example.homework18.databinding.FragmentUsersListBinding
 import com.example.homework18.presentation.common.BaseFragment
 import com.example.homework18.presentation.model.UserPresentationModel
@@ -39,6 +38,7 @@ class UsersListFragment :
     }
 
     override fun bindObservers() {
+        bindLoadingState()
         bindUsers()
         bindNavigationEvents()
     }
@@ -50,33 +50,26 @@ class UsersListFragment :
         }
     }
 
+    private fun bindDeleteButton() {
+        binding.delete.setOnClickListener {
+            usersListViewModel.onEvent(UsersListEvent.DeleteSelectedUsers)
+        }
+    }
+
     private fun bindUsers() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                usersListViewModel.usersFlow.collect {
-                    when(it){
-                        is Resource.Success -> {
-                            hideProgressBarAndShowRecyclerView()
-                            usersListRecyclerAdapter.submitList(it.data)
-                        }
-                        is Resource.Error -> {
-                            hideProgressBarAndShowRecyclerView()
+                usersListViewModel.usersFlow.collect { userPresentationModels ->
+                    when {
+                        userPresentationModels.any { it.status == UserPresentationModel.Status.Error } -> {
                             showErrorScreen()
                         }
-                        is Resource.Loading -> showProgressBarAndHideRecyclerView()
-
                         else -> {
-                            doNothing()
+                            usersListRecyclerAdapter.submitList(userPresentationModels)
                         }
                     }
                 }
             }
-        }
-    }
-
-    private fun bindDeleteButton() {
-        binding.delete.setOnClickListener {
-            usersListViewModel.deleteSelectedUsers()
         }
     }
 
@@ -90,17 +83,30 @@ class UsersListFragment :
         }
     }
 
+    private fun bindLoadingState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                usersListViewModel.isLoading.collect { isLoading ->
+                    if (isLoading) {
+                        showProgressBarAndHideRecyclerView()
+                    } else {
+                        hideProgressBarAndShowRecyclerView()
+                    }
+                }
+            }
+        }
+    }
+
     private fun handleItemClick(user : UserPresentationModel){
-        usersListViewModel.onClick(user)
+        usersListViewModel.onEvent(UsersListEvent.ItemClicked(userPresentationModel = user))
     }
 
     private fun handleItemSelected(userPresentationModel: UserPresentationModel) {
-        val event = if (userPresentationModel.isSelected == UserPresentationModel.IsItemSelected.SELECTED) {
-            UserSelectionEvent.ItemSelected(userPresentationModel)
+        if (userPresentationModel.isSelected == UserPresentationModel.IsItemSelected.SELECTED) {
+            usersListViewModel.onEvent(UsersListEvent.ItemSelected(userPresentationModel))
         } else {
-            UserSelectionEvent.ItemUnselected(userPresentationModel)
+            usersListViewModel.onEvent(UsersListEvent.ItemUnselected(userPresentationModel))
         }
-        usersListViewModel.handleSelectionEvent(event)
     }
 
     private fun handleNavigationEvent(navigationEvent: NavigationEvent) {
@@ -132,10 +138,6 @@ class UsersListFragment :
     }
 
     private fun showErrorScreen() {
-
-    }
-
-    private fun doNothing() {
 
     }
 }
