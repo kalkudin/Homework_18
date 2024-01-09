@@ -9,8 +9,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.homework18.data.common.Resource
 import com.example.homework18.databinding.FragmentUsersListBinding
-import com.example.homework18.domain.model.User
 import com.example.homework18.presentation.common.BaseFragment
+import com.example.homework18.presentation.model.UserPresentationModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -20,12 +20,22 @@ class UsersListFragment :
 
     private val usersListViewModel: UsersListViewModel by viewModels()
 
-    private val usersListRecyclerAdapter = UsersListRecyclerAdapter { user ->
-        handleItemClick(user)
-    }
+    private val usersListRecyclerAdapter = UsersListRecyclerAdapter(
+        itemClickListener = { userPresentationModel ->
+            handleItemClick(userPresentationModel)
+        },
+        selectionListener = { userPresentationModel ->
+            handleItemSelected(userPresentationModel)
+        }
+    )
 
     override fun bind() {
         bindRecyclerView()
+    }
+
+    override fun bindViewActionListeners() {
+        super.bindViewActionListeners()
+        bindDeleteButton()
     }
 
     override fun bindObservers() {
@@ -46,14 +56,14 @@ class UsersListFragment :
                 usersListViewModel.usersFlow.collect {
                     when(it){
                         is Resource.Success -> {
-                            hideProgressBar()
+                            hideProgressBarAndShowRecyclerView()
                             usersListRecyclerAdapter.submitList(it.data)
                         }
                         is Resource.Error -> {
-                            hideProgressBar()
+                            hideProgressBarAndShowRecyclerView()
                             showErrorScreen()
                         }
-                        is Resource.Loading -> showProgressBar()
+                        is Resource.Loading -> showProgressBarAndHideRecyclerView()
 
                         else -> {
                             doNothing()
@@ -61,6 +71,12 @@ class UsersListFragment :
                     }
                 }
             }
+        }
+    }
+
+    private fun bindDeleteButton() {
+        binding.delete.setOnClickListener {
+            usersListViewModel.deleteSelectedUsers()
         }
     }
 
@@ -74,8 +90,17 @@ class UsersListFragment :
         }
     }
 
-    private fun handleItemClick(user: User) {
+    private fun handleItemClick(user : UserPresentationModel){
         usersListViewModel.onClick(user)
+    }
+
+    private fun handleItemSelected(userPresentationModel: UserPresentationModel) {
+        val event = if (userPresentationModel.isSelected == UserPresentationModel.IsItemSelected.SELECTED) {
+            UserSelectionEvent.ItemSelected(userPresentationModel)
+        } else {
+            UserSelectionEvent.ItemUnselected(userPresentationModel)
+        }
+        usersListViewModel.handleSelectionEvent(event)
     }
 
     private fun handleNavigationEvent(navigationEvent: NavigationEvent) {
@@ -92,12 +117,18 @@ class UsersListFragment :
         findNavController().navigate(action)
     }
 
-    private fun showProgressBar() {
-        binding.progressBar.visibility = View.VISIBLE
+    private fun showProgressBarAndHideRecyclerView() {
+        with(binding){
+            progressBar.visibility = View.VISIBLE
+            usersListRecyclerView.visibility = View.GONE
+        }
     }
 
-    private fun hideProgressBar() {
-        binding.progressBar.visibility = View.GONE
+    private fun hideProgressBarAndShowRecyclerView() {
+        with(binding){
+            progressBar.visibility = View.GONE
+            usersListRecyclerView.visibility = View.VISIBLE
+        }
     }
 
     private fun showErrorScreen() {

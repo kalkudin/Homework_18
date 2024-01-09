@@ -20,12 +20,6 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideHandleResponse(): HandleResponse {
-        return HandleResponse()
-    }
-
-    @Provides
-    @Singleton
     fun provideUsersRepository(
         usersService: UsersService,
         handleResponse: HandleResponse
@@ -37,7 +31,8 @@ object RepositoryModule {
     @Singleton
     fun provideUserDetailsRepository(
         userDetailsService: UserDetailsService,
+        handleResponse: HandleResponse
     ): UserDetailsRepository {
-        return UserDetailsRepositoryImpl(userDetailsService)
+        return UserDetailsRepositoryImpl(userDetailsService = userDetailsService, handleResponse = handleResponse)
     }
 }

@@ -66,10 +66,10 @@ class UserDetailsFragment :
     }
 
     private fun showProgressBar() {
-        binding.progressBar.visibility = View.VISIBLE
+        binding.progressLayout.visibility = View.VISIBLE
     }
 
     private fun hideProgressBar() {
-        binding.progressBar.visibility = View.GONE
+        binding.progressLayout.visibility = View.GONE
     }
 }

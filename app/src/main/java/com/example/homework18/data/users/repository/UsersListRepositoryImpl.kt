@@ -2,10 +2,9 @@ package com.example.homework18.data.users.repository
 
 import com.example.homework18.data.common.HandleResponse
 import com.example.homework18.data.common.Resource
-import com.example.homework18.data.mapper.mapListToDomain
-import com.example.homework18.data.service.UsersService
-import com.example.homework18.data.mapper.mapToDomain
+import com.example.homework18.data.mapper.mapResource
 import com.example.homework18.data.mapper.toDomain
+import com.example.homework18.data.service.UsersService
 import com.example.homework18.domain.model.User
 import com.example.homework18.domain.users.repository.UsersListRepository
 import kotlinx.coroutines.flow.Flow
@@ -17,7 +16,7 @@ class UsersListRepositoryImpl @Inject constructor(
 ) : UsersListRepository {
 
     override suspend fun getUsersList(): Flow<Resource<List<User>>> {
-        return handleResponse.handleApiCallForList { usersService.getUsers() }
-            .mapListToDomain { it.toDomain() }
+        return handleResponse.handleApiCall { usersService.getUsers() }
+            .mapResource { it.map { dto -> dto.toDomain() } }
     }
 }

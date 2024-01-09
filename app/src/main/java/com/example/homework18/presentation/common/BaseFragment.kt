@@ -24,6 +24,7 @@ abstract class BaseFragment<VB : ViewBinding>(private val inflate: inflater<VB>)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         bind()
+        bindViewActionListeners()
         bindObservers()
     }
 
@@ -33,6 +34,10 @@ abstract class BaseFragment<VB : ViewBinding>(private val inflate: inflater<VB>)
     }
 
     abstract fun bind()
+
+    open fun bindViewActionListeners() {
+
+    }
 
     abstract fun bindObservers()
 }
